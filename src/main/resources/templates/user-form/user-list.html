@@ -11,22 +11,12 @@
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <th scope="row">1</th>
-                <td>Anderson</td>
-                <td>Vargas</td>
-                <td>anvargasa</td>
-                <td>anavargasa@unal.edu.co</td>
-                <td>
-                    <a href="#"><i class="fas fa-edit"></i></a> | <a href="#"><i class="fas fa-user-times"></i></a>
-                </td>
-            </tr>
-            <tr>
-                <th scope="row">2</th>
-                <td>Jennifer</td>
-                <td>Ibarra</td>
-                <td>jibarrau</td>
-                <td>jibarrau@ulagrancolombia.edu.co</td>
+            <tr th:each="user: ${userList}">
+                <th scope="row" th:text="${user.id}"></th>
+                <td th:text="${user.firstName}"></td>
+                <td th:text="${user.lastName}"></td>
+                <td th:text="${user.username}"></td>
+                <td th:text="${user.email}"></td>
                 <td>
                     <a href="#"><i class="fas fa-edit"></i></a> | <a href="#"><i class="fas fa-user-times"></i></a>
                 </td>
