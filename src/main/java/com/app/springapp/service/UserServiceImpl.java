@@ -20,8 +20,6 @@ public class UserServiceImpl implements UserService{
     public Iterable<User> getAllUsers(){
         return repUser.findAll();
     }
-
-
     
     private boolean checkUserNameAvailable(User user) throws Exception{
         Optional<User> userFound = repUser.findByUsername(user.getUsername());
@@ -39,8 +37,6 @@ public class UserServiceImpl implements UserService{
         return true;
     }
 
-
-
     @Override
     public User createUser(User user) throws Exception{
         if(checkUserNameAvailable(user) && checkPasswordValid(user))
@@ -48,4 +44,27 @@ public class UserServiceImpl implements UserService{
         
         return user;
     }
+
+    @Override
+    public User getUserById(Long id) throws Exception{
+        User user = repUser.findById(id).orElseThrow(() -> new Exception("El usuario para editar no existe"));
+        return user;
+    }
+
+    @Override
+    public User updateUser(User fromUser) throws Exception {
+        User toUser = getUserById(fromUser.getId());
+        mapUser(fromUser, toUser);
+		User user = repUser.save(toUser);
+        return user;
+    }
+
+    protected void mapUser(User from,User to) {
+		to.setUsername(from.getUsername());
+		to.setFirstName(from.getFirstName());
+		to.setLastName(from.getLastName());
+		to.setEmail(from.getEmail());
+		to.setRoles(from.getRoles());
+        to.setConfirmPassword(to.getPassword());
+	}
 }

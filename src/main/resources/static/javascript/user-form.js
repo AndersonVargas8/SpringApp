@@ -1,7 +1,7 @@
 $(document).ready(function () {
     //Asegurate que el id que le diste a la tabla sea igual al texto despues del simbolo #
     $('#userList').DataTable({
-        "order": [[3, "asc"]],
+        "order": [[0, "asc"]],
         language: {
             "processing": "Procesando...",
             "lengthMenu": "Mostrar _MENU_ registros",
