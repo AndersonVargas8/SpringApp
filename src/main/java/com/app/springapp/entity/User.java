@@ -14,6 +14,9 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.Transient;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 
 import org.hibernate.annotations.GenericGenerator;
 
@@ -26,22 +29,30 @@ public class User implements Serializable{
     @GenericGenerator(name = "native", strategy = "native")
     private long id;
 
-    @Column
-    private String firstName;
-
     @Column 
-    private String lastName;
-
-    @Column(unique = true)
-    private String email;
-
-    @Column(unique = true)
-    private String username;
-
-    @Column
-    private String password;
+	@NotBlank
+	private String firstName;
+	
+	@Column 
+	@NotBlank
+	private String lastName;
+	
+	@Column(unique = true) 
+	@Email 
+	@NotBlank
+	private String email;
+	
+	@Column(unique = true) 
+	@NotBlank
+    @Size(min=5,max=10,message="No se cumplen las reglas del tamaño")
+	private String username;
+	
+	@Column 
+	@NotBlank
+	private String password;
 
     @Transient
+    @NotBlank
     private String confirmPassword;
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "user_roles"
