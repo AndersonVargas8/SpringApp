@@ -2,8 +2,7 @@ package com.app.springapp.service;
 
 import java.util.Optional;
 
-import javax.validation.Valid;
-
+import com.app.springapp.dto.ChangePasswordForm;
 import com.app.springapp.entity.User;
 import com.app.springapp.repository.UserRepository;
 
@@ -74,4 +73,24 @@ public class UserServiceImpl implements UserService {
         
         repUser.delete(user);
     }
+
+    @Override
+    public User changePassword(ChangePasswordForm form) throws Exception{
+		User storedUser = getUserById(form.getId());  
+		if(!form.getCurrentPassword().equals(storedUser.getPassword())) {
+			throw new Exception("Contraseña actual incorrecta.");
+		}
+		
+		if (form.getCurrentPassword().equals(form.getNewPassword())) {
+			throw new Exception("La nueva contraseña debe ser diferente a la actual contraseña");
+		}
+		
+		if(!form.getNewPassword().equals(form.getConfirmPassword())) {
+			throw new Exception("Las contraseñas no coinciden");
+		}
+		
+		storedUser.setPassword(form.getNewPassword());
+        storedUser.setConfirmPassword(form.getConfirmPassword());
+		return repUser.save(storedUser);
+	}
 }

@@ -30,7 +30,7 @@
     <script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/css/bootstrap.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css">
-    
+
     <!-- Funcionamiento DataTable-->
     <script src="../../static/javascript/user-form.js" th:src="@{javascript/user-form.js}"></script>
 </head>
@@ -76,6 +76,8 @@
             </div>
         </div>
     </div>
+
+    <div th:if="${editMode}" th:include="user-form/change-password.html" th:remove="tag"></div>
     <div th:include="user-form/confirm-delete-modal.html" th:remove="tag"></div>
 </body>
 
