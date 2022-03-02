@@ -7,6 +7,11 @@ import com.app.springapp.entity.User;
 import com.app.springapp.repository.UserRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -15,6 +20,12 @@ public class UserServiceImpl implements UserService {
     @Autowired
     UserRepository repUser;
 
+    @Autowired
+    BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
+    
     @Override
     public Iterable<User> getAllUsers() {
         return repUser.findAll();
@@ -38,8 +49,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User createUser(User user) throws Exception {
-        if (checkUserNameAvailable(user) && checkPasswordValid(user))
+        if (checkUserNameAvailable(user) && checkPasswordValid(user)){
+            String encodePassword = bCryptPasswordEncoder.encode(user.getPassword());
+		    user.setPassword(encodePassword);
             user = repUser.save(user);
+        }
 
         return user;
     }
@@ -51,6 +65,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_USER')")
     public User updateUser(User fromUser) throws Exception {
         User toUser = getUserById(fromUser.getId());
         mapUser(fromUser, toUser);
@@ -68,20 +83,39 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public void deleteUser(Long id) throws Exception {
         User user = getUserById(id);
         
         repUser.delete(user);
     }
 
+    public boolean isLoggedUserADMIN(){
+        return loggedUserHasRole("ROLE_ADMIN");
+       }
+       
+       public boolean loggedUserHasRole(String role) {
+           Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+           UserDetails loggedUser = null;
+           Object roles = null; 
+           if (principal instanceof UserDetails) {
+               loggedUser = (UserDetails) principal;
+           
+               roles = loggedUser.getAuthorities().stream()
+                       .filter(x -> role.equals(x.getAuthority() ))      
+                       .findFirst().orElse(null); //loggedUser = null;
+           }
+           return roles != null ?true :false;
+       }
+
     @Override
     public User changePassword(ChangePasswordForm form) throws Exception{
 		User storedUser = getUserById(form.getId());  
-		if(!form.getCurrentPassword().equals(storedUser.getPassword())) {
+		if(!isLoggedUserADMIN() && !passwordEncoder.matches(form.getCurrentPassword(),storedUser.getPassword())) {
 			throw new Exception("Contraseña actual incorrecta.");
 		}
 		
-		if (form.getCurrentPassword().equals(form.getNewPassword())) {
+		if (!isLoggedUserADMIN() && form.getCurrentPassword().equals(form.getNewPassword())) {
 			throw new Exception("La nueva contraseña debe ser diferente a la actual contraseña");
 		}
 		
@@ -89,8 +123,9 @@ public class UserServiceImpl implements UserService {
 			throw new Exception("Las contraseñas no coinciden");
 		}
 		
-		storedUser.setPassword(form.getNewPassword());
-        storedUser.setConfirmPassword(form.getConfirmPassword());
+        String encodePassword = bCryptPasswordEncoder.encode(form.getNewPassword());
+		storedUser.setPassword(encodePassword);
+        storedUser.setConfirmPassword(encodePassword);
 		return repUser.save(storedUser);
 	}
 }
