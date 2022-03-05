@@ -2,6 +2,7 @@ package com.app.springapp.service;
 
 import java.util.Optional;
 
+import com.app.springapp.Exception.UsernameOrIdNotFound;
 import com.app.springapp.dto.ChangePasswordForm;
 import com.app.springapp.entity.User;
 import com.app.springapp.repository.UserRepository;
@@ -59,8 +60,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User getUserById(Long id) throws Exception {
-        User user = repUser.findById(id).orElseThrow(() -> new Exception("El usuario no existe"));
+    public User getUserById(Long id) throws UsernameOrIdNotFound {
+        User user = repUser.findById(id).orElseThrow(() -> new UsernameOrIdNotFound("El Id del usuario no existe"));
         return user;
     }
 
@@ -84,7 +85,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    public void deleteUser(Long id) throws Exception {
+    public void deleteUser(Long id) throws UsernameOrIdNotFound{
         User user = getUserById(id);
         
         repUser.delete(user);

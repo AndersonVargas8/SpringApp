@@ -4,6 +4,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
+import com.app.springapp.Exception.UsernameOrIdNotFound;
 import com.app.springapp.dto.ChangePasswordForm;
 import com.app.springapp.entity.User;
 import com.app.springapp.repository.RoleRepository;
@@ -128,7 +129,7 @@ public class UserController {
     public String deleteUser(Model model, @PathVariable(name = "id") Long id) {
         try {
             serUser.deleteUser(id);
-        } catch (Exception e) {
+        } catch (UsernameOrIdNotFound e) {
             model.addAttribute("listErrorMessage", e.getMessage());
         }
         return getUserForm(model);
