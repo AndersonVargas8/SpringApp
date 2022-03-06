@@ -1,5 +1,7 @@
 package com.app.springapp.controller;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -7,6 +9,7 @@ import javax.validation.Valid;
 import com.app.springapp.Exception.CustomeFieldValidationException;
 import com.app.springapp.Exception.UsernameOrIdNotFound;
 import com.app.springapp.dto.ChangePasswordForm;
+import com.app.springapp.entity.Role;
 import com.app.springapp.entity.User;
 import com.app.springapp.repository.RoleRepository;
 import com.app.springapp.service.UserService;
@@ -39,6 +42,44 @@ public class UserController {
         return "index";
     }
 
+    @GetMapping("/signup")
+    public String signup(Model model) {
+
+        Role userRole = repRole.findByName("USUARIO");
+        List<Role> roles = Arrays.asList(userRole);
+        model.addAttribute("userForm", new User());
+        model.addAttribute("roles", roles);
+        model.addAttribute("signup",true);
+
+        return "user-form/user-signup";
+    }
+
+    @PostMapping("/signup")
+    public String postSignup(@Valid @ModelAttribute("userForm") User user, BindingResult result, ModelMap model) {
+        Role userRole = repRole.findByName("USUARIO");
+        List<Role> roles = Arrays.asList(userRole);
+        model.addAttribute("userForm", user);
+        model.addAttribute("roles", roles);
+        model.addAttribute("signup",true);
+
+        if (result.hasErrors()) {
+            return "user-form/user-signup";
+        } else {
+            try {
+                serUser.createUser(user);
+                
+            } catch (CustomeFieldValidationException e) {
+                result.rejectValue(e.getFieldName(), null, e.getMessage());
+                return "user-form/user-signup";
+            } catch (Exception e) {
+                model.addAttribute("formErrorMessage", e.getMessage());
+                return "user-form/user-signup";
+            }
+        }
+        return "index";
+
+    }
+
     @GetMapping("/userForm")
     public String getUserForm(Model model) {
         model.addAttribute("userForm", new User());
@@ -61,10 +102,10 @@ public class UserController {
             } catch (CustomeFieldValidationException e) {
                 result.rejectValue(e.getFieldName(), null, e.getMessage());
                 model.addAttribute("userForm", user);
-                model.addAttribute("formTab","active");
+                model.addAttribute("formTab", "active");
                 model.addAttribute("userList", serUser.getAllUsers());
-                model.addAttribute("roles",repRole.findAll());
-            }catch (Exception e) {
+                model.addAttribute("roles", repRole.findAll());
+            } catch (Exception e) {
                 model.addAttribute("formErrorMessage", e.getMessage());
                 model.addAttribute("userForm", user);
                 model.addAttribute("formTab", "active");
@@ -143,7 +184,8 @@ public class UserController {
     }
 
     @PostMapping("/editUser/changePassword")
-    public ResponseEntity<String> postEditUseChangePassword(@Valid @RequestBody ChangePasswordForm form, Errors errors) {
+    public ResponseEntity<String> postEditUseChangePassword(@Valid @RequestBody ChangePasswordForm form,
+            Errors errors) {
         try {
             // If error, just return a 400 bad request, along with the error message
             if (errors.hasErrors()) {
