@@ -4,6 +4,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
+import com.app.springapp.Exception.CustomeFieldValidationException;
 import com.app.springapp.Exception.UsernameOrIdNotFound;
 import com.app.springapp.dto.ChangePasswordForm;
 import com.app.springapp.entity.User;
@@ -57,7 +58,13 @@ public class UserController {
                 serUser.createUser(user);
                 model.addAttribute("userForm", new User());
                 model.addAttribute("listTab", "active");
-            } catch (Exception e) {
+            } catch (CustomeFieldValidationException e) {
+                result.rejectValue(e.getFieldName(), null, e.getMessage());
+                model.addAttribute("userForm", user);
+                model.addAttribute("formTab","active");
+                model.addAttribute("userList", serUser.getAllUsers());
+                model.addAttribute("roles",repRole.findAll());
+            }catch (Exception e) {
                 model.addAttribute("formErrorMessage", e.getMessage());
                 model.addAttribute("userForm", user);
                 model.addAttribute("formTab", "active");

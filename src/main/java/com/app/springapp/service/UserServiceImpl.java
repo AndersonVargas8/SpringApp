@@ -2,6 +2,7 @@ package com.app.springapp.service;
 
 import java.util.Optional;
 
+import com.app.springapp.Exception.CustomeFieldValidationException;
 import com.app.springapp.Exception.UsernameOrIdNotFound;
 import com.app.springapp.dto.ChangePasswordForm;
 import com.app.springapp.entity.User;
@@ -26,7 +27,7 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     PasswordEncoder passwordEncoder;
-    
+
     @Override
     public Iterable<User> getAllUsers() {
         return repUser.findAll();
@@ -36,7 +37,7 @@ public class UserServiceImpl implements UserService {
         Optional<User> userFound = repUser.findByUsername(user.getUsername());
 
         if (userFound.isPresent()) {
-            throw new Exception("Nombre de usuario no disponible");
+            throw new CustomeFieldValidationException("Nombre de usuario no disponible","username");
         }
         return true;
     }
@@ -50,9 +51,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User createUser(User user) throws Exception {
-        if (checkUserNameAvailable(user) && checkPasswordValid(user)){
+        if (checkUserNameAvailable(user) && checkPasswordValid(user)) {
             String encodePassword = bCryptPasswordEncoder.encode(user.getPassword());
-		    user.setPassword(encodePassword);
+            user.setPassword(encodePassword);
             user = repUser.save(user);
         }
 
@@ -85,48 +86,66 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    public void deleteUser(Long id) throws UsernameOrIdNotFound{
+    public void deleteUser(Long id) throws UsernameOrIdNotFound {
         User user = getUserById(id);
-        
+
         repUser.delete(user);
     }
 
-    public boolean isLoggedUserADMIN(){
+    public boolean isLoggedUserADMIN() {
         return loggedUserHasRole("ROLE_ADMIN");
-       }
-       
-       public boolean loggedUserHasRole(String role) {
-           Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-           UserDetails loggedUser = null;
-           Object roles = null; 
-           if (principal instanceof UserDetails) {
-               loggedUser = (UserDetails) principal;
-           
-               roles = loggedUser.getAuthorities().stream()
-                       .filter(x -> role.equals(x.getAuthority() ))      
-                       .findFirst().orElse(null); //loggedUser = null;
-           }
-           return roles != null ?true :false;
-       }
+    }
+
+    public boolean loggedUserHasRole(String role) {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UserDetails loggedUser = null;
+        Object roles = null;
+        if (principal instanceof UserDetails) {
+            loggedUser = (UserDetails) principal;
+
+            roles = loggedUser.getAuthorities().stream()
+                    .filter(x -> role.equals(x.getAuthority()))
+                    .findFirst().orElse(null); // loggedUser = null;
+        }
+        return roles != null ? true : false;
+    }
 
     @Override
-    public User changePassword(ChangePasswordForm form) throws Exception{
-		User storedUser = getUserById(form.getId());  
-		if(!isLoggedUserADMIN() && !passwordEncoder.matches(form.getCurrentPassword(),storedUser.getPassword())) {
-			throw new Exception("Contraseña actual incorrecta.");
-		}
-		
-		if (!isLoggedUserADMIN() && form.getCurrentPassword().equals(form.getNewPassword())) {
-			throw new Exception("La nueva contraseña debe ser diferente a la actual contraseña");
-		}
-		
-		if(!form.getNewPassword().equals(form.getConfirmPassword())) {
-			throw new Exception("Las contraseñas no coinciden");
-		}
-		
+    public User changePassword(ChangePasswordForm form) throws Exception {
+        User storedUser = getUserById(form.getId());
+        if (!isLoggedUserADMIN() && !passwordEncoder.matches(form.getCurrentPassword(), storedUser.getPassword())) {
+            throw new Exception("Contraseña actual incorrecta.");
+        }
+
+        if (!isLoggedUserADMIN() && form.getCurrentPassword().equals(form.getNewPassword())) {
+            throw new Exception("La nueva contraseña debe ser diferente a la actual contraseña");
+        }
+
+        if (!form.getNewPassword().equals(form.getConfirmPassword())) {
+            throw new Exception("Las contraseñas no coinciden");
+        }
+
         String encodePassword = bCryptPasswordEncoder.encode(form.getNewPassword());
-		storedUser.setPassword(encodePassword);
+        storedUser.setPassword(encodePassword);
         storedUser.setConfirmPassword(encodePassword);
-		return repUser.save(storedUser);
-	}
+        return repUser.save(storedUser);
+    }
+    
+    @Override
+    public User getLoggedUser() throws Exception {
+        //Obtener el usuario logeado
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        
+        UserDetails loggedUser = null;
+    
+        //Verificar que ese objeto traido de sesion es el usuario
+        if (principal instanceof UserDetails) {
+            loggedUser = (UserDetails) principal;
+        }
+        
+        User myUser = repUser
+                .findByUsername(loggedUser.getUsername()).orElseThrow(() -> new Exception("Ocurrió un problema al obtener el usuario de la sesión"));
+        
+        return myUser;
+    }
 }
